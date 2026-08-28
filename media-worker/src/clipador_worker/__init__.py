@@ -1,0 +1,1 @@
+"""Clipador media worker."""

@@ -1,0 +1,80 @@
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+.mvn/timing.properties
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+dist/
+*.tsbuildinfo
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Configuration and secrets
+.env
+.env.*
+!.env.example
+!.env.local.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials*.json
+secrets*.json
+service-account*.json
+
+# Runtime data and generated media
+data/
+storage/
+tmp/
+work/
+outputs/
+downloads/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.srt
+*.vtt
+*.ass
+models/
+tools/
+*.part
+*.ytdl
+*.tmp
+
+# Logs and reports
+*.log
+erl_crash.dump
+*.sqlite
+*.sqlite3
+*.db
+.coverage
+htmlcov/
+coverage/
+site/
+
+# Local tooling and operating system state
+.codex/
+.local/
+desktop.ini

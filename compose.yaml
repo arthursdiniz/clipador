@@ -1,0 +1,107 @@
+name: clipador
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4.2-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      CLIPADOR_SECURITY_USERNAME: ${CLIPADOR_SECURITY_USERNAME}
+      CLIPADOR_SECURITY_PASSWORD: ${CLIPADOR_SECURITY_PASSWORD}
+      CLIPADOR_STORAGE_ROOT: /var/lib/clipador/storage
+      CLIPADOR_TEMP_ROOT: /var/lib/clipador/tmp
+      CLIPADOR_RABBIT_RETRY_DELAY: ${CLIPADOR_RABBIT_RETRY_DELAY_MS:-30000}ms
+    ports:
+      - "8080:8080"
+    volumes:
+      - clipador-storage:/var/lib/clipador/storage
+      - clipador-temp:/var/lib/clipador/tmp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  media-worker:
+    build:
+      context: ./media-worker
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      CLIPADOR_STORAGE_ROOT: /var/lib/clipador/storage
+      CLIPADOR_WORKER_INBOX: /var/lib/clipador-worker/state/inbox.sqlite3
+      CLIPADOR_WORKER_MAX_RETRIES: ${CLIPADOR_WORKER_MAX_RETRIES:-5}
+      CLIPADOR_WORKER_TASKS: ${CLIPADOR_WORKER_TASKS:-VALIDATE_MEDIA,EXTRACT_AUDIO,TRANSCRIBE_AUDIO,ANALYZE_CONTENT,RENDER_CLIPS}
+      CLIPADOR_RABBIT_RETRY_DELAY_MS: ${CLIPADOR_RABBIT_RETRY_DELAY_MS:-30000}
+      CLIPADOR_FFMPEG_EXECUTABLE: ffmpeg
+      CLIPADOR_WHISPER_MODEL: ${CLIPADOR_WHISPER_MODEL:-small}
+      CLIPADOR_WHISPER_DEVICE: ${CLIPADOR_WHISPER_DEVICE:-cpu}
+      CLIPADOR_WHISPER_COMPUTE_TYPE: ${CLIPADOR_WHISPER_COMPUTE_TYPE:-int8}
+      CLIPADOR_WHISPER_BEAM_SIZE: ${CLIPADOR_WHISPER_BEAM_SIZE:-5}
+      CLIPADOR_WHISPER_VAD_MIN_SILENCE_MS: ${CLIPADOR_WHISPER_VAD_MIN_SILENCE_MS:-500}
+      CLIPADOR_WHISPER_MODEL_CACHE: /var/lib/clipador-worker/models
+      CLIPADOR_TRANSCRIPT_MAX_ARTIFACT_BYTES: ${CLIPADOR_TRANSCRIPT_MAX_ARTIFACT_BYTES:-67108864}
+      CLIPADOR_ANALYSIS_MAX_ARTIFACT_BYTES: ${CLIPADOR_ANALYSIS_MAX_ARTIFACT_BYTES:-16777216}
+      CLIPADOR_ANALYSIS_PROVIDER: ${CLIPADOR_ANALYSIS_PROVIDER:-local}
+      CLIPADOR_RENDER_MAX_MANIFEST_BYTES: ${CLIPADOR_RENDER_MAX_MANIFEST_BYTES:-16777216}
+      CLIPADOR_RENDER_MAX_OUTPUT_BYTES: ${CLIPADOR_RENDER_MAX_OUTPUT_BYTES:-2147483648}
+    ports:
+      - "8090:8090"
+    volumes:
+      - clipador-storage:/var/lib/clipador/storage
+      - media-worker-state:/var/lib/clipador-worker/state
+      - media-worker-models:/var/lib/clipador-worker/models
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health', timeout=2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  clipador-storage:
+  clipador-temp:
+  media-worker-state:
+  media-worker-models:

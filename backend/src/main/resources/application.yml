@@ -1,0 +1,148 @@
+spring:
+  application:
+    name: clipador-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/clipador}
+    username: ${SPRING_DATASOURCE_USERNAME:clipador}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+  data:
+    web:
+      pageable:
+        default-page-size: 100
+        max-page-size: 500
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
+    connection-timeout: 5s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  servlet:
+    multipart:
+      max-file-size: ${CLIPADOR_MAX_UPLOAD_SIZE:5GB}
+      max-request-size: ${CLIPADOR_MAX_UPLOAD_SIZE:5GB}
+      location: ${CLIPADOR_HTTP_UPLOAD_TEMP:${CLIPADOR_TEMP_ROOT:./data/tmp}}
+
+server:
+  shutdown: graceful
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  observations:
+    key-values:
+      application: ${spring.application.name}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+clipador:
+  security:
+    username: ${CLIPADOR_SECURITY_USERNAME}
+    password: ${CLIPADOR_SECURITY_PASSWORD}
+    api-docs-public: ${CLIPADOR_API_DOCS_PUBLIC:true}
+  api-limits:
+    max-concurrent-requests: ${CLIPADOR_MAX_CONCURRENT_REQUESTS:64}
+    max-concurrent-uploads: ${CLIPADOR_MAX_CONCURRENT_UPLOADS:2}
+  observability:
+    queue-poll-interval: ${CLIPADOR_QUEUE_METRICS_INTERVAL:PT15S}
+    queue-poll-initial-delay: ${CLIPADOR_QUEUE_METRICS_INITIAL_DELAY:PT5S}
+  ingestion:
+    max-video-duration: ${CLIPADOR_MAX_VIDEO_DURATION:PT4H}
+    max-upload-bytes: ${CLIPADOR_MAX_UPLOAD_BYTES:5368709120}
+    max-width: ${CLIPADOR_MAX_VIDEO_WIDTH:3840}
+    max-height: ${CLIPADOR_MAX_VIDEO_HEIGHT:2160}
+    youtube-timeout: ${CLIPADOR_YOUTUBE_TIMEOUT:PT30M}
+    probe-timeout: ${CLIPADOR_PROBE_TIMEOUT:PT30S}
+  storage:
+    type: ${CLIPADOR_STORAGE_TYPE:local}
+    root: ${CLIPADOR_STORAGE_ROOT:./data/storage}
+    temp-root: ${CLIPADOR_TEMP_ROOT:./data/tmp}
+  media-tools:
+    yt-dlp-executable: ${CLIPADOR_YT_DLP_EXECUTABLE:yt-dlp}
+    ffprobe-executable: ${CLIPADOR_FFPROBE_EXECUTABLE:ffprobe}
+  cleanup:
+    orphan-retention: ${CLIPADOR_ORPHAN_RETENTION:PT24H}
+    interval: ${CLIPADOR_CLEANUP_INTERVAL:PT1H}
+    initial-delay: ${CLIPADOR_CLEANUP_INITIAL_DELAY:PT10M}
+  messaging:
+    publish-timeout: ${CLIPADOR_RABBIT_PUBLISH_TIMEOUT:PT10S}
+    outbox-interval: ${CLIPADOR_OUTBOX_INTERVAL:PT1S}
+    outbox-batch-size: ${CLIPADOR_OUTBOX_BATCH_SIZE:20}
+    retry-delay: ${CLIPADOR_RABBIT_RETRY_DELAY:PT30S}
+    result-max-retries: ${CLIPADOR_RESULT_MAX_RETRIES:5}
+  transcription:
+    max-artifact-bytes: ${CLIPADOR_TRANSCRIPT_MAX_ARTIFACT_BYTES:67108864}
+    max-segments: ${CLIPADOR_TRANSCRIPT_MAX_SEGMENTS:100000}
+    persistence-batch-size: ${CLIPADOR_TRANSCRIPT_BATCH_SIZE:250}
+  analysis:
+    max-artifact-bytes: ${CLIPADOR_ANALYSIS_MAX_ARTIFACT_BYTES:16777216}
+    max-candidates: ${CLIPADOR_ANALYSIS_MAX_CANDIDATES:100}
+    min-duration-seconds: ${CLIPADOR_CLIP_MIN_DURATION:20}
+    ideal-duration-seconds: ${CLIPADOR_CLIP_IDEAL_DURATION:45}
+    max-duration-seconds: ${CLIPADOR_CLIP_MAX_DURATION:90}
+    semantic-weight: ${CLIPADOR_SCORE_SEMANTIC_WEIGHT:0.30}
+    audio-weight: ${CLIPADOR_SCORE_AUDIO_WEIGHT:0.12}
+    visual-weight: ${CLIPADOR_SCORE_VISUAL_WEIGHT:0.08}
+    narrative-weight: ${CLIPADOR_SCORE_NARRATIVE_WEIGHT:0.22}
+    hook-weight: ${CLIPADOR_SCORE_HOOK_WEIGHT:0.23}
+    context-penalty-weight: ${CLIPADOR_SCORE_CONTEXT_PENALTY_WEIGHT:0.15}
+    overlap-threshold: ${CLIPADOR_SELECTION_OVERLAP_THRESHOLD:0.40}
+    similarity-threshold: ${CLIPADOR_SELECTION_SIMILARITY_THRESHOLD:0.72}
+  clip-quantity:
+    base-count: ${CLIPADOR_CLIP_BASE_COUNT:${CLIPADOR_CLIP_COUNT:5}}
+    minutes-per-clip: ${CLIPADOR_CLIP_MINUTES_PER_CLIP:5}
+    automatic-max: ${CLIPADOR_CLIP_AUTO_MAX:20}
+    extended-multiplier: ${CLIPADOR_CLIP_EXTENDED_MULTIPLIER:1.5}
+    extended-min-extra: ${CLIPADOR_CLIP_EXTENDED_MIN_EXTRA:3}
+    maximum: ${CLIPADOR_CLIP_MAX_REQUESTED:30}
+  rendering:
+    formats: ${CLIPADOR_RENDER_FORMATS:VERTICAL_9_16}
+    burn-in-subtitles: ${CLIPADOR_RENDER_BURN_IN_SUBTITLES:true}
+    video-crf: ${CLIPADOR_RENDER_VIDEO_CRF:21}
+    encoder-preset: ${CLIPADOR_RENDER_PRESET:medium}
+    audio-bitrate-kbps: ${CLIPADOR_RENDER_AUDIO_BITRATE_KBPS:160}
+    output-fps: ${CLIPADOR_RENDER_OUTPUT_FPS:30}
+    max-manifest-bytes: ${CLIPADOR_RENDER_MAX_MANIFEST_BYTES:16777216}
+    max-download-bytes: ${CLIPADOR_RENDER_MAX_DOWNLOAD_BYTES:2147483648}
+    smart-reframing-enabled: ${CLIPADOR_SMART_REFRAMING_ENABLED:true}
+    reframing-mode: ${CLIPADOR_REFRAMING_MODE:AUTO}
+    reframing-sample-fps: ${CLIPADOR_REFRAMING_SAMPLE_FPS:1.5}
+    reframing-smoothing: ${CLIPADOR_REFRAMING_SMOOTHING:0.82}
+    reframing-max-pan-ratio-per-second: ${CLIPADOR_REFRAMING_MAX_PAN_RATIO_PER_SECOND:0.35}
+    reframing-face-min-size-ratio: ${CLIPADOR_REFRAMING_FACE_MIN_SIZE_RATIO:0.025}
+    reframing-detection-width: ${CLIPADOR_REFRAMING_DETECTION_WIDTH:640}
+    reframing-max-keyframes: ${CLIPADOR_REFRAMING_MAX_KEYFRAMES:64}
