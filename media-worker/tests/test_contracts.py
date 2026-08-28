@@ -77,6 +77,7 @@ def test_parses_strict_analysis_contract() -> None:
         "audioStorageKey": f"jobs/{job_id}/audio/normalized.wav",
         "transcriptStorageKey": f"jobs/{job_id}/transcript/transcript.json",
         "analysisStorageKey": f"jobs/{job_id}/analysis/candidates.json",
+        "videoTitle": "Sabatina com Renan Santos", "videoChannel": "Canal de Debates",
         "minDurationSeconds": 20, "idealDurationSeconds": 45, "maxDurationSeconds": 90,
         "maxCandidates": 100, "semanticWeight": .30, "audioWeight": .12,
         "visualWeight": .08, "narrativeWeight": .22, "hookWeight": .23,
@@ -85,6 +86,7 @@ def test_parses_strict_analysis_contract() -> None:
     }).encode())
 
     assert isinstance(parsed, AnalyzeContentCommandV1)
+    assert parsed.video_title == "Sabatina com Renan Santos"
 
 
 def test_parses_strict_render_contract() -> None:

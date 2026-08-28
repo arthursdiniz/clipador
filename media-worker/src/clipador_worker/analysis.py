@@ -171,7 +171,7 @@ class LlmCandidateScore(BaseModel):
     context_penalty: float = Field(alias="contextPenalty", ge=0, le=1)
     reason: str = Field(min_length=1, max_length=1000)
     hook: str = Field(min_length=1, max_length=500)
-    title: str = Field(min_length=1, max_length=160)
+    title: str = Field(min_length=1, max_length=100)
     category: Literal["STORY", "INSIGHT", "HUMOR", "CONFLICT", "EMOTION", "TIP",
                       "OPINION", "QUESTION_ANSWER", "REVELATION", "OTHER"]
 
@@ -190,13 +190,18 @@ class OllamaClipAnalysisProvider(LocalMultimodalClipAnalyzer):
         prompt_candidates = [{"candidateKey": item["candidateKey"], "start": item["start"],
                               "end": item["end"], "text": item["sourceText"]}
                              for item in requested]
+        video_context = {"originalTitle": command.video_title, "channel": command.video_channel}
         prompt = (
             "Você seleciona cortes curtos autossuficientes de podcasts e entrevistas em português ou inglês. "
             "Avalie cada candidato sem alterar candidateKey. Penalize começo no meio da ideia, dependência de "
             "contexto e final sem conclusão. Valorize hook imediato, clareza, história/argumento completo e "
-            "potencial de retenção. Para cada corte, crie também um título curto e envolvente, fiel ao que foi "
-            "dito, compreensível isoladamente, sem hashtags, aspas ou promessa enganosa. Retorne somente o JSON "
-            "exigido pelo schema. Candidatos: "
+            "potencial de retenção. Para cada corte, identifique a pessoa, organização ou assunto principal usando "
+            "a transcrição e o contexto do vídeo. Crie um título com no máximo 100 caracteres, curto e envolvente, "
+            "incluindo o nome do protagonista quando ele for relevante para entender o corte. O título deve ser "
+            "fiel ao que foi dito, compreensível isoladamente, sem hashtags, aspas, nomes não comprovados ou "
+            "promessa enganosa. Retorne somente o JSON exigido pelo schema. Contexto do vídeo: "
+            + json.dumps(video_context, ensure_ascii=False, separators=(",", ":"))
+            + ". Candidatos: "
             + json.dumps(prompt_candidates, ensure_ascii=False, separators=(",", ":"))
         )
         payload = {
@@ -345,13 +350,14 @@ def score_window(segments: list[Segment], start_index: int, end_index: int,
         "hookScore": round(hook_value, 5), "contextPenalty": round(context, 5),
         "finalScore": round(final, 5),
         "reason": "Trecho com " + ", ".join(reasons) + ".",
-        "hook": hook, "title": engaging_title(text),
+        "hook": hook, "title": engaging_title(text, command.video_title, command.video_channel),
         "category": category, "sourceText": text[:50_000],
     }
 
 
-def engaging_title(text: str) -> str:
-    """Select a concise, faithful title from the strongest sentence in the clip."""
+def engaging_title(text: str, video_title: str | None = None,
+                   video_channel: str | None = None) -> str:
+    """Build a concise title from the strongest sentence and verified video context."""
     normalized = normalize_text(text)
     sentences = [part.strip() for part in re.split(r"(?<=[.!?…])\s+", normalized) if part.strip()]
     if not sentences:
@@ -375,7 +381,54 @@ def engaging_title(text: str) -> str:
         return length_quality * 0.42 + impact * 0.35 + punctuation + numeric + position
 
     strongest = max(enumerate(sentences[:8]), key=strength)[1]
-    return normalize_title(strongest)
+    subject = principal_subject(video_title, text)
+    if not subject and video_channel and video_channel.casefold() in text.casefold():
+        subject = clean_subject(video_channel)
+    title = strongest
+    if subject and subject.casefold() not in strongest.casefold():
+        title = f"{subject}: {strongest}"
+    return normalize_title(title)
+
+
+def principal_subject(video_title: str | None, transcript_text: str) -> str | None:
+    """Extract a person or named subject only when the available context supports it."""
+    source = normalize_text(video_title or "")
+    context_patterns = (
+        r"\b(?:com|with|feat\.?|ft\.?)\s+([^|:–—-]+)",
+        r"\b(?:sabatina|entrevista|conversa|debate)\s*(?:de|do|da)?\s*[:\-]?\s*([^|:–—-]+)",
+    )
+    for pattern in context_patterns:
+        match = re.search(pattern, source, flags=re.IGNORECASE)
+        if match:
+            candidate = clean_subject(match.group(1))
+            if candidate:
+                return candidate
+
+    entity_pattern = re.compile(
+        r"\b([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,}"
+        r"(?:\s+(?:(?:da|de|do|das|dos)\s+)?[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,}){1,3})\b"
+    )
+    ignored = {"por isso", "hoje eu", "agora você", "em seguida", "nos estados unidos"}
+    entities = [match.group(1) for match in entity_pattern.finditer(transcript_text)]
+    supported = [entity for entity in entities if entity.casefold() not in ignored]
+    return supported[0] if supported else None
+
+
+def clean_subject(value: str) -> str | None:
+    candidate = re.split(
+        r"\s+(?:no|na|nos|nas|em|sobre|fala|explica|responde|comenta|reage|ao vivo)\b",
+        normalize_text(value), maxsplit=1, flags=re.IGNORECASE,
+    )[0]
+    candidate = re.sub(r"\([^)]*\)", "", candidate).strip(" .,!?'\"#")
+    words = candidate.split()
+    if not 2 <= len(words) <= 4 or any(re.search(r"\d", word) for word in words):
+        return None
+    generic = {"debate presidencial", "debate político", "episódio completo", "podcast completo"}
+    if candidate.casefold() in generic:
+        return None
+    if candidate.isupper():
+        candidate = candidate.title()
+    return candidate
 
 
 def normalize_title(value: str) -> str:
@@ -385,8 +438,8 @@ def normalize_title(value: str) -> str:
     words = title.split()
     if len(words) > 14:
         title = " ".join(words[:14]).rstrip(".,;:!?") + "…"
-    if len(title) > 160:
-        title = title[:159].rstrip(" .,;:!?") + "…"
+    if len(title) > 100:
+        title = title[:99].rstrip(" .,;:!?") + "…"
     if not title:
         return "Momento em destaque"
     return title[0].upper() + title[1:]

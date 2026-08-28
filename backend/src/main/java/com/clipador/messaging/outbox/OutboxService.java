@@ -94,6 +94,7 @@ public class OutboxService {
                 job.getId(), job.getVideo().getId(), job.getCorrelationId(),
                 job.getVideo().getStoragePath(), job.getNormalizedAudioPath(),
                 job.getTranscriptArtifactPath(), outputKey,
+                job.getVideo().getTitle(), job.getVideo().getChannel(),
                 p.minDurationSeconds(), p.idealDurationSeconds(), p.maxDurationSeconds(),
                 p.maxCandidates(), p.semanticWeight(), p.audioWeight(), p.visualWeight(),
                 p.narrativeWeight(), p.hookWeight(), p.contextPenaltyWeight(),

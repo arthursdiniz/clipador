@@ -105,7 +105,7 @@ public class ClipAnalysisImportService {
         if (value == null || value.isBlank()) value = source.sourceText();
         if (value == null || value.isBlank()) return "Momento em destaque";
         String normalized = value.trim().replaceAll("[\\r\\n\\t]+", " ").replaceAll("\\s{2,}", " ");
-        return normalized.substring(0, Math.min(normalized.length(), 160));
+        return normalized.substring(0, Math.min(normalized.length(), 100));
     }
 
     public record ImportResult(int candidateCount) {}

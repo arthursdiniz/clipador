@@ -38,7 +38,7 @@ export function ClipModal({ clip, url, error, onClose, onDownload }: Props) {
           <div className="suggested-title-copy">
             <span id="suggested-title-label"><Sparkles size={14} /> Título sugerido pela IA</span>
             <strong>{suggestedTitle}</strong>
-            <small>Use este título ao publicar o corte para destacar o principal gancho do conteúdo.</small>
+            <small>{suggestedTitle.length}/100 caracteres · Use este título ao publicar o corte para destacar o principal gancho.</small>
           </div>
           <div className="suggested-title-action">
             <button className={`copy-title-button ${copyStatus === 'copied' ? 'copied' : ''}`} type="button" onClick={() => void copySuggestedTitle()} disabled={!clip.title?.trim()}>

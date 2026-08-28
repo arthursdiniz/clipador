@@ -14,6 +14,8 @@ public record AnalyzeContentCommandV1(
         String audioStorageKey,
         String transcriptStorageKey,
         String analysisStorageKey,
+        String videoTitle,
+        String videoChannel,
         double minDurationSeconds,
         double idealDurationSeconds,
         double maxDurationSeconds,
@@ -39,6 +41,8 @@ public record AnalyzeContentCommandV1(
                 || blank(analysisStorageKey)) {
             throw new IllegalArgumentException("Analysis storage keys are required");
         }
+        videoTitle = clean(videoTitle, 512);
+        videoChannel = clean(videoChannel, 255);
         if (minDurationSeconds < 5 || idealDurationSeconds < minDurationSeconds
                 || maxDurationSeconds < idealDurationSeconds || maxDurationSeconds > 180
                 || maxCandidates < 1 || maxCandidates > 1_000) {
@@ -53,6 +57,12 @@ public record AnalyzeContentCommandV1(
     }
 
     private static boolean blank(String value) { return value == null || value.isBlank(); }
+
+    private static String clean(String value, int maxLength) {
+        if (value == null || value.isBlank()) return null;
+        String normalized = value.trim();
+        return normalized.substring(0, Math.min(normalized.length(), maxLength));
+    }
 
     private static void requireUnit(double value) {
         if (!Double.isFinite(value) || value < 0 || value > 1) {

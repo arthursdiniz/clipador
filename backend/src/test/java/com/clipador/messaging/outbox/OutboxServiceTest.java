@@ -44,6 +44,29 @@ class OutboxServiceTest {
         assertThat(json.get("storageKey").asText()).isEqualTo(video.getStoragePath());
     }
 
+    @Test
+    void includesVideoIdentityContextInContentAnalysisCommand() throws Exception {
+        OutboxMessageRepository repository = mock(OutboxMessageRepository.class);
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        ObjectMapper mapper = new ObjectMapper();
+        OutboxService service = new OutboxService(repository, mapper, analysisProperties(), renderingProperties());
+        Video video = Video.youtube("https://www.youtube.com/watch?v=abcdefghijk", null);
+        video.completeIngestion("videos/" + video.getId() + "/original.mp4", BigDecimal.TEN,
+                1920, 1080, BigDecimal.valueOf(30), "h264", "aac",
+                "Sabatina com Renan Santos", "Canal de Debates", null, null, "pt");
+        ProcessingJob job = ProcessingJob.received(video, "analysis-key", "analysis-correlation");
+        job.recordNormalizedAudio("jobs/" + job.getId() + "/audio/normalized.wav");
+        job.recordTranscriptArtifact("jobs/" + job.getId() + "/transcript/transcript.json");
+
+        service.enqueueContentAnalysis(job);
+
+        ArgumentCaptor<OutboxMessage> captor = ArgumentCaptor.forClass(OutboxMessage.class);
+        verify(repository).save(captor.capture());
+        var json = mapper.readTree(captor.getValue().getPayload());
+        assertThat(json.get("videoTitle").asText()).isEqualTo("Sabatina com Renan Santos");
+        assertThat(json.get("videoChannel").asText()).isEqualTo("Canal de Debates");
+    }
+
     private ClipAnalysisProperties analysisProperties() {
         return new ClipAnalysisProperties(16_777_216, 100, 20, 45, 90,
                 .30, .12, .08, .22, .23, .15, .40, .72);

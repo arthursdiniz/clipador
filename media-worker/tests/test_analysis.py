@@ -8,7 +8,7 @@ import wave
 import clipador_worker.analysis as analysis_module
 from clipador_worker.analysis import (LocalMultimodalClipAnalyzer, OllamaClipAnalysisProvider,
                                       Segment, Timeline,
-                                      candidate_windows, engaging_title, score_window)
+                                      candidate_windows, engaging_title, principal_subject, score_window)
 from clipador_worker.artifacts import JobArtifactStorage
 from clipador_worker.config import Settings
 from clipador_worker.contracts import AnalyzeContentCommandV1
@@ -58,7 +58,24 @@ def test_title_selects_a_strong_faithful_sentence_and_limits_its_length() -> Non
     )
 
     assert title == "O erro que ninguém percebe destrói o resultado em apenas 3 dias!"
-    assert len(title) <= 160
+    assert len(title) <= 100
+
+
+def test_title_identifies_the_main_actor_from_video_context() -> None:
+    title = engaging_title(
+        "A proposta reduz custos e muda completamente o cenário da eleição.",
+        "SABATINA COM RENAN SANTOS | ELEIÇÕES 2026",
+        "Canal de Debates",
+    )
+
+    assert title.startswith("Renan Santos:")
+    assert "proposta" in title.lower()
+    assert len(title) <= 100
+
+
+def test_subject_is_not_invented_without_supporting_context() -> None:
+    assert principal_subject("Debate presidencial 2026", "A proposta precisa ser analisada.") is None
+    assert principal_subject("Podcast Inteligência Ltda - episódio completo", "Falamos da proposta.") is None
 
 
 def test_analyzer_generates_atomic_versioned_artifact(tmp_path: Path, monkeypatch) -> None:
@@ -128,7 +145,7 @@ def test_ollama_provider_validates_structured_scores(tmp_path: Path) -> None:
     assert enriched[0]["finalScore"] > candidate["finalScore"]
 
 
-def command_for(job_id, video_id) -> AnalyzeContentCommandV1:
+def command_for(job_id, video_id, video_title=None, video_channel=None) -> AnalyzeContentCommandV1:
     return AnalyzeContentCommandV1(
         schemaVersion=1, messageId=uuid4(), taskType="ANALYZE_CONTENT", jobId=job_id,
         videoId=video_id, correlationId="correlation",
@@ -136,6 +153,7 @@ def command_for(job_id, video_id) -> AnalyzeContentCommandV1:
         audioStorageKey=f"jobs/{job_id}/audio/normalized.wav",
         transcriptStorageKey=f"jobs/{job_id}/transcript/transcript.json",
         analysisStorageKey=f"jobs/{job_id}/analysis/candidates.json",
+        videoTitle=video_title, videoChannel=video_channel,
         minDurationSeconds=20, idealDurationSeconds=45, maxDurationSeconds=90,
         maxCandidates=100, semanticWeight=.30, audioWeight=.12, visualWeight=.08,
         narrativeWeight=.22, hookWeight=.23, contextPenaltyWeight=.15,

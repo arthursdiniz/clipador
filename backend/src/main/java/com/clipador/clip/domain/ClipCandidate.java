@@ -57,7 +57,7 @@ public class ClipCandidate extends BaseEntity {
     @Column(length = 500)
     private String hook;
 
-    @Column(nullable = false, length = 160)
+    @Column(nullable = false, length = 100)
     private String title;
 
     @Enumerated(EnumType.STRING)
@@ -91,7 +91,7 @@ public class ClipCandidate extends BaseEntity {
         this.finalScore = score(finalScore, "finalScore");
         this.reason = requireText(reason, "reason", 1000);
         this.hook = hook == null || hook.isBlank() ? null : requireText(hook, "hook", 500);
-        this.title = requireText(title, "title", 160);
+        this.title = requireText(title, "title", 100);
         this.category = Objects.requireNonNull(category, "category is required");
         this.sourceText = requireText(sourceText, "sourceText", 50_000);
     }

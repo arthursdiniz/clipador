@@ -32,6 +32,7 @@ describe('ClipModal', () => {
 
     expect(screen.getByText('Título sugerido pela IA')).toBeInTheDocument()
     expect(screen.getAllByText(expectedTitle).length).toBeGreaterThan(0)
+    expect(screen.getByText(`${expectedTitle.length}/100 caracteres`, { exact: false })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Copiar título' }))
     expect(writeText).toHaveBeenCalledWith(expectedTitle)
     expect(screen.getByRole('button', { name: 'Título copiado' })).toBeInTheDocument()

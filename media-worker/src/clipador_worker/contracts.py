@@ -92,6 +92,8 @@ class AnalyzeContentCommandV1(BaseModel):
     audio_storage_key: str = Field(alias="audioStorageKey", min_length=1, max_length=1024)
     transcript_storage_key: str = Field(alias="transcriptStorageKey", min_length=1, max_length=1024)
     analysis_storage_key: str = Field(alias="analysisStorageKey", min_length=1, max_length=1024)
+    video_title: str | None = Field(default=None, alias="videoTitle", max_length=512)
+    video_channel: str | None = Field(default=None, alias="videoChannel", max_length=255)
     min_duration_seconds: float = Field(alias="minDurationSeconds", ge=5, le=180)
     ideal_duration_seconds: float = Field(alias="idealDurationSeconds", ge=5, le=180)
     max_duration_seconds: float = Field(alias="maxDurationSeconds", ge=5, le=180)
