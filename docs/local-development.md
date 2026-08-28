@@ -63,6 +63,29 @@ O endpoint Ollama é limitado a loopback por segurança. Se o serviço ou modelo
 
 ## Inicialização
 
+### Inicialização automática recomendada
+
+Depois que o ambiente já foi configurado uma vez, dê dois cliques em `INICIAR-CLIPADOR.cmd` na raiz do projeto. O atalho inicia PostgreSQL, RabbitMQ, backend, media worker e frontend, aguarda os health checks e abre a interface. A janela pode ser fechada depois da mensagem de sucesso; os aplicativos continuam rodando ocultos.
+
+O mesmo fluxo pelo PowerShell é:
+
+```powershell
+.\infra\local\Start-Clipador.ps1 -OpenBrowser
+```
+
+Logs separados ficam em `data/logs/apps` e os identificadores dos processos iniciados ficam em `data/run`, ambos ignorados pelo Git. Se uma das portas 5173, 8080 ou 8090 já estiver ocupada sem que todo o Clipador esteja saudável, o script interrompe a inicialização em vez de encerrar um processo desconhecido.
+
+Para desligar tudo, dê dois cliques em `PARAR-CLIPADOR.cmd` ou execute:
+
+```powershell
+.\infra\local\Stop-Clipador.ps1
+```
+
+O encerramento confere o PID e o instante de criação antes de terminar cada árvore de processos, evitando atingir um processo que reutilizou o mesmo identificador.
+Prefira aguardar o job atual terminar antes de desligar; se o worker for encerrado durante uma etapa, a mensageria persistente permite recuperação, mas a etapa poderá precisar ser repetida na próxima inicialização.
+
+### Inicialização manual para depuração
+
 Inicie ou confira as dependências:
 
 ```powershell
@@ -109,7 +132,7 @@ Com backend e worker ativos, execute da raiz:
 
 O teste realiza somente consultas paginadas, lê as credenciais de `.env.local` sem exibi-las e informa falhas, média e p95. Ele é um gate local reproduzível, não substitui um ensaio de capacidade no hardware e com vídeos representativos do ambiente final.
 
-Flyway cria e valida o schema na inicialização do backend. Para encerrar PostgreSQL e RabbitMQ:
+Flyway cria e valida o schema na inicialização do backend. Se os aplicativos foram iniciados manualmente, encerre-os com `Ctrl+C` e então pare PostgreSQL e RabbitMQ:
 
 ```powershell
 .\infra\local\Stop-LocalDependencies.ps1

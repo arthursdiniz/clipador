@@ -85,14 +85,12 @@ O Clipador não depende de Docker. Nesta máquina, PostgreSQL 18 usa um cluster 
 & .\media-worker\.venv\Scripts\python.exe .\infra\local\download_portable_tools.py
 .\infra\local\Initialize-LocalEnvironment.ps1
 .\infra\local\Test-Prerequisites.ps1
-.\infra\local\Start-Backend.ps1
-# em outro terminal
-.\infra\local\Start-MediaWorker.ps1
-# em um terceiro terminal
-.\infra\local\Start-Frontend.ps1
+.\infra\local\Start-Clipador.ps1 -OpenBrowser
 ```
 
-`Initialize-LocalEnvironment.ps1` cria `.env.local` com segredos aleatórios, inicializa PostgreSQL e RabbitMQ e pode ser repetido com segurança. Para desligar as dependências, use `.\infra\local\Stop-LocalDependencies.ps1`. O guia completo está em [docs/local-development.md](docs/local-development.md).
+Depois da primeira configuração, também é possível dar dois cliques em `INICIAR-CLIPADOR.cmd`. Backend, worker e frontend ficam ocultos, com logs em `data/logs/apps`, e permanecem ativos após fechar a janela do inicializador. Para desligar tudo, use `PARAR-CLIPADOR.cmd` ou `.\infra\local\Stop-Clipador.ps1`.
+
+`Initialize-LocalEnvironment.ps1` cria `.env.local` com segredos aleatórios, inicializa PostgreSQL e RabbitMQ e pode ser repetido com segurança. O guia completo, incluindo execução manual para depuração, está em [docs/local-development.md](docs/local-development.md).
 
 ### Pré-requisitos para Compose
 
