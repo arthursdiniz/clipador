@@ -48,5 +48,12 @@ if (Test-Path -LiteralPath $statePath -PathType Leaf) {
     Write-Output 'No Clipador application processes were registered by the unified launcher.'
 }
 
-& (Join-Path $PSScriptRoot 'Stop-LocalDependencies.ps1') -EnvFile $EnvFile
+$savedErrorActionPreference = $ErrorActionPreference
+try {
+    # Keep Windows PowerShell 5 from promoting expected native shutdown stderr.
+    $ErrorActionPreference = 'Continue'
+    & (Join-Path $PSScriptRoot 'Stop-LocalDependencies.ps1') -EnvFile $EnvFile
+} finally {
+    $ErrorActionPreference = $savedErrorActionPreference
+}
 Write-Output 'Clipador stopped.'

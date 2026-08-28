@@ -119,7 +119,15 @@ Write-Output 'Checking native prerequisites...'
 if ($LASTEXITCODE -ne 0) { throw 'Clipador prerequisites are incomplete.' }
 
 Write-Output 'Starting PostgreSQL and RabbitMQ...'
-& (Join-Path $PSScriptRoot 'Start-LocalDependencies.ps1') -EnvFile $EnvFile
+$savedErrorActionPreference = $ErrorActionPreference
+try {
+    # Windows PowerShell 5 wraps expected native stderr from RabbitMQ diagnostics
+    # as ErrorRecord. The dependency script validates native exit codes itself.
+    $ErrorActionPreference = 'Continue'
+    & (Join-Path $PSScriptRoot 'Start-LocalDependencies.ps1') -EnvFile $EnvFile
+} finally {
+    $ErrorActionPreference = $savedErrorActionPreference
+}
 
 $powerShellExecutable = (Get-Process -Id $PID).Path
 $processes = @()
