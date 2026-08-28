@@ -8,7 +8,7 @@ import wave
 import clipador_worker.analysis as analysis_module
 from clipador_worker.analysis import (LocalMultimodalClipAnalyzer, OllamaClipAnalysisProvider,
                                       Segment, Timeline,
-                                      candidate_windows, score_window)
+                                      candidate_windows, engaging_title, score_window)
 from clipador_worker.artifacts import JobArtifactStorage
 from clipador_worker.config import Settings
 from clipador_worker.contracts import AnalyzeContentCommandV1
@@ -46,7 +46,19 @@ def test_scoring_rewards_a_strong_self_contained_hook() -> None:
     assert result["hookScore"] >= .6
     assert result["narrativeScore"] >= .6
     assert result["category"] in {"STORY", "INSIGHT", "REVELATION"}
+    assert result["title"] == "Descobri o erro que ninguém percebe."
     assert 0 <= result["finalScore"] <= 1
+
+
+def test_title_selects_a_strong_faithful_sentence_and_limits_its_length() -> None:
+    title = engaging_title(
+        "Hoje eu quero explicar o cenário. "
+        "O erro que ninguém percebe destrói o resultado em apenas 3 dias! "
+        "Depois disso apresentamos todos os detalhes necessários para resolver a situação."
+    )
+
+    assert title == "O erro que ninguém percebe destrói o resultado em apenas 3 dias!"
+    assert len(title) <= 160
 
 
 def test_analyzer_generates_atomic_versioned_artifact(tmp_path: Path, monkeypatch) -> None:
@@ -103,7 +115,8 @@ def test_ollama_provider_validates_structured_scores(tmp_path: Path) -> None:
     response = {"candidates": [{
         "candidateKey": "candidate-1", "semanticScore": .95, "narrativeScore": .9,
         "hookScore": .9, "contextPenalty": .05, "reason": "História completa com revelação.",
-        "hook": "Eu perdi tudo...", "category": "STORY",
+        "hook": "Eu perdi tudo...", "title": "Eu perdi tudo — e consegui recomeçar",
+        "category": "STORY",
     }]}
     provider._request = lambda _payload: {"message": {"content": json.dumps(response)}}
 
@@ -111,6 +124,7 @@ def test_ollama_provider_validates_structured_scores(tmp_path: Path) -> None:
 
     assert enriched[0]["semanticScore"] == .95
     assert enriched[0]["category"] == "STORY"
+    assert enriched[0]["title"] == "Eu perdi tudo — e consegui recomeçar"
     assert enriched[0]["finalScore"] > candidate["finalScore"]
 
 

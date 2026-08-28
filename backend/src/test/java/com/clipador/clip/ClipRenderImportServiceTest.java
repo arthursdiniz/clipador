@@ -31,7 +31,8 @@ class ClipRenderImportServiceTest {
         ProcessingJob job = ProcessingJob.received(video, "key", "correlation");
         ClipCandidate candidate = ClipCandidate.analyzed(job, "candidate", BigDecimal.TEN,
                 BigDecimal.valueOf(55), score(.9), score(.7), score(.6), score(.8), score(.9),
-                score(.1), score(.85), "Complete", "Hook", ClipCategory.INSIGHT, "Source text");
+                score(.1), score(.85), "Complete", "Hook", ClipCategory.INSIGHT, "Source text",
+                "O segredo que mudou tudo");
         candidate.select();
         String prefix = "jobs/%s/clips/%s/vertical_9_16".formatted(job.getId(), candidate.getId());
         String manifest = """

@@ -67,7 +67,9 @@ export const api = {
       throw new ApiError('Backend indisponível durante o download.', 0)
     }
     if (!response.ok) throw await errorFromResponse(response)
-    return response.blob()
+    const disposition = response.headers.get('Content-Disposition')
+    const filename = disposition?.match(/filename="?([^";]+)"?/i)?.[1] || null
+    return { blob: await response.blob(), filename }
   },
 }
 

@@ -71,14 +71,14 @@ public final class ApiModels {
             UUID id, UUID jobId, BigDecimal startTime, BigDecimal endTime,
             BigDecimal semanticScore, BigDecimal audioScore, BigDecimal visualScore,
             BigDecimal narrativeScore, BigDecimal hookScore, BigDecimal contextPenalty,
-            BigDecimal finalScore, String reason, String hook, ClipCategory category,
+            BigDecimal finalScore, String reason, String hook, String title, ClipCategory category,
             boolean selected, String sourceText, Instant createdAt) {
         static ClipCandidateResponse from(ClipCandidate candidate) {
             return new ClipCandidateResponse(candidate.getId(), candidate.getJob().getId(),
                     candidate.getStartTime(), candidate.getEndTime(), candidate.getSemanticScore(),
                     candidate.getAudioScore(), candidate.getVisualScore(), candidate.getNarrativeScore(),
                     candidate.getHookScore(), candidate.getContextPenalty(), candidate.getFinalScore(),
-                    candidate.getReason(), candidate.getHook(), candidate.getCategory(), candidate.isSelected(),
+                    candidate.getReason(), candidate.getHook(), candidate.getTitle(), candidate.getCategory(), candidate.isSelected(),
                     candidate.getSourceText(), candidate.getCreatedAt());
         }
     }
@@ -95,13 +95,14 @@ public final class ApiModels {
         }
     }
 
-    public record ClipResponse(UUID id, UUID jobId, UUID candidateId, ClipFormat format,
+    public record ClipResponse(UUID id, UUID jobId, UUID candidateId, String title, ClipFormat format,
                                int width, int height, BigDecimal durationSeconds,
                                String subtitlePath, String srtPath, String vttPath, String assPath,
                                String thumbnailPath, String renderError,
                                Instant createdAt) {
         static ClipResponse from(Clip clip) {
             return new ClipResponse(clip.getId(), clip.getJob().getId(), clip.getCandidate().getId(),
+                    clip.getCandidate().getTitle(),
                     clip.getFormat(), clip.getWidth(), clip.getHeight(), clip.getDurationSeconds(),
                     clip.getSubtitlePath(), clip.getSrtPath(), clip.getVttPath(), clip.getAssPath(),
                     clip.getThumbnailPath(), clip.getRenderError(), clip.getCreatedAt());

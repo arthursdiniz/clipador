@@ -32,7 +32,8 @@ class ClipAnalysisImportServiceTest {
                    "semanticScore":0.9,"audioScore":0.7,"visualScore":0.6,
                    "narrativeScore":0.8,"hookScore":0.85,"contextPenalty":0.1,
                    "finalScore":0.82,"reason":"Ideia completa com abertura forte.",
-                   "hook":"Eu descobri um segredo...","category":"INSIGHT",
+                   "hook":"Eu descobri um segredo...","title":"O segredo que mudou meu trabalho",
+                   "category":"INSIGHT",
                    "sourceText":"Eu descobri um segredo e expliquei toda a conclusão."}]}
                 """.formatted(job.getId(), video.getId());
         StorageService storage = mock(StorageService.class);
@@ -51,6 +52,7 @@ class ClipAnalysisImportServiceTest {
         verify(repository).saveAll(captor.capture());
         List<ClipCandidate> saved = (List<ClipCandidate>) captor.getValue();
         assertThat(saved.getFirst().getFinalScore()).isEqualByComparingTo("0.82000");
+        assertThat(saved.getFirst().getTitle()).isEqualTo("O segredo que mudou meu trabalho");
         assertThat(saved.getFirst().getSourceText()).contains("conclusão");
     }
 }

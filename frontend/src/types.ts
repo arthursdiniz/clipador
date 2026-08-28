@@ -20,7 +20,7 @@ export type Video = {
   sourceType: 'YOUTUBE' | 'UPLOAD'
   sourceUrl: string | null
   originalFilename: string | null
-  title: string | null
+  title: string
   channel: string | null
   durationSeconds: number | null
   width: number | null
@@ -59,6 +59,7 @@ export type Clip = {
   id: string
   jobId: string
   candidateId: string
+  title: string | null
   format: 'HORIZONTAL_16_9' | 'VERTICAL_9_16' | 'SQUARE_1_1'
   width: number
   height: number

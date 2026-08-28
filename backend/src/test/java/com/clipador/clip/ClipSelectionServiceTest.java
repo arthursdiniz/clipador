@@ -48,6 +48,6 @@ class ClipSelectionServiceTest {
         BigDecimal value = BigDecimal.valueOf(score);
         return ClipCandidate.analyzed(job, key, BigDecimal.valueOf(start), BigDecimal.valueOf(end),
                 value, value, value, value, value, BigDecimal.valueOf(.05), value,
-                "Trecho completo", "Hook", ClipCategory.INSIGHT, text);
+                "Trecho completo", "Hook", ClipCategory.INSIGHT, text, "Título envolvente");
     }
 }

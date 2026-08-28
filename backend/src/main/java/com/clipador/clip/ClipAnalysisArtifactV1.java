@@ -23,6 +23,7 @@ public record ClipAnalysisArtifactV1(
             double finalScore,
             String reason,
             String hook,
+            String title,
             String category,
             String sourceText) {}
 }

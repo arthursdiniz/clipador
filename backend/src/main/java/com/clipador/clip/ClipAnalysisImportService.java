@@ -51,7 +51,7 @@ public class ClipAnalysisImportService {
                     decimal(source.end()), score(source.semanticScore()), score(source.audioScore()),
                     score(source.visualScore()), score(source.narrativeScore()), score(source.hookScore()),
                     score(source.contextPenalty()), score(source.finalScore()), source.reason(), source.hook(),
-                    category(source.category()), source.sourceText()));
+                    category(source.category()), source.sourceText(), candidateTitle(source)));
         }
         candidates.saveAll(imported);
         candidates.flush();
@@ -97,6 +97,15 @@ public class ClipAnalysisImportService {
         } catch (RuntimeException exception) {
             throw new IllegalArgumentException("Unknown clip category", exception);
         }
+    }
+
+    private String candidateTitle(ClipAnalysisArtifactV1.Candidate source) {
+        String value = source.title();
+        if (value == null || value.isBlank()) value = source.hook();
+        if (value == null || value.isBlank()) value = source.sourceText();
+        if (value == null || value.isBlank()) return "Momento em destaque";
+        String normalized = value.trim().replaceAll("[\\r\\n\\t]+", " ").replaceAll("\\s{2,}", " ");
+        return normalized.substring(0, Math.min(normalized.length(), 160));
     }
 
     public record ImportResult(int candidateCount) {}

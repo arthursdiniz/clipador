@@ -168,16 +168,16 @@ function Studio({ credentials, onLogout }: { credentials: Credentials; onLogout:
 
   async function download(clip: Clip) {
     try {
-      const blob = await api.downloadClip(credentials, clip.id)
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a'); link.href = url; link.download = `clipador-${clip.id}.mp4`; link.click()
+      const asset = await api.downloadClip(credentials, clip.id)
+      const url = URL.createObjectURL(asset.blob)
+      const link = document.createElement('a'); link.href = url; link.download = asset.filename || `clipador-${clip.id}.mp4`; link.click()
       window.setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (caught) { setError(messageOf(caught, 'Não foi possível baixar o clipe.')) }
   }
 
   async function preview(clip: Clip) {
     closePreview(); setPreviewClip(clip); setPreviewError('')
-    try { setPreviewUrl(URL.createObjectURL(await api.downloadClip(credentials, clip.id))) }
+    try { setPreviewUrl(URL.createObjectURL((await api.downloadClip(credentials, clip.id)).blob)) }
     catch (caught) { setPreviewError(messageOf(caught, 'Não foi possível preparar a prévia.')) }
   }
 

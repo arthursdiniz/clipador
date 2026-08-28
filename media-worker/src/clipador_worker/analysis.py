@@ -171,6 +171,7 @@ class LlmCandidateScore(BaseModel):
     context_penalty: float = Field(alias="contextPenalty", ge=0, le=1)
     reason: str = Field(min_length=1, max_length=1000)
     hook: str = Field(min_length=1, max_length=500)
+    title: str = Field(min_length=1, max_length=160)
     category: Literal["STORY", "INSIGHT", "HUMOR", "CONFLICT", "EMOTION", "TIP",
                       "OPINION", "QUESTION_ANSWER", "REVELATION", "OTHER"]
 
@@ -193,7 +194,9 @@ class OllamaClipAnalysisProvider(LocalMultimodalClipAnalyzer):
             "Você seleciona cortes curtos autossuficientes de podcasts e entrevistas em português ou inglês. "
             "Avalie cada candidato sem alterar candidateKey. Penalize começo no meio da ideia, dependência de "
             "contexto e final sem conclusão. Valorize hook imediato, clareza, história/argumento completo e "
-            "potencial de retenção. Retorne somente o JSON exigido pelo schema. Candidatos: "
+            "potencial de retenção. Para cada corte, crie também um título curto e envolvente, fiel ao que foi "
+            "dito, compreensível isoladamente, sem hashtags, aspas ou promessa enganosa. Retorne somente o JSON "
+            "exigido pelo schema. Candidatos: "
             + json.dumps(prompt_candidates, ensure_ascii=False, separators=(",", ":"))
         )
         payload = {
@@ -258,6 +261,7 @@ def apply_llm_score(candidate: dict[str, object], score: LlmCandidateScore,
         "finalScore": round(clamp(positive - score.context_penalty * command.context_penalty_weight), 5),
         "reason": score.reason,
         "hook": score.hook,
+        "title": normalize_title(score.title),
         "category": score.category,
     })
     return updated
@@ -341,8 +345,51 @@ def score_window(segments: list[Segment], start_index: int, end_index: int,
         "hookScore": round(hook_value, 5), "contextPenalty": round(context, 5),
         "finalScore": round(final, 5),
         "reason": "Trecho com " + ", ".join(reasons) + ".",
-        "hook": hook, "category": category, "sourceText": text[:50_000],
+        "hook": hook, "title": engaging_title(text),
+        "category": category, "sourceText": text[:50_000],
     }
+
+
+def engaging_title(text: str) -> str:
+    """Select a concise, faithful title from the strongest sentence in the clip."""
+    normalized = normalize_text(text)
+    sentences = [part.strip() for part in re.split(r"(?<=[.!?…])\s+", normalized) if part.strip()]
+    if not sentences:
+        sentences = [normalized]
+
+    impact_terms = (
+        "segredo", "ninguém", "nunca", "descobri", "perdi", "erro", "problema", "como",
+        "por que", "verdade", "resultado", "secret", "nobody", "never", "discovered",
+        "lost", "mistake", "problem", "how", "why", "truth", "result",
+    )
+
+    def strength(item: tuple[int, str]) -> float:
+        index, sentence = item
+        words = sentence.split()
+        lowered = sentence.lower()
+        length_quality = 1.0 - min(abs(len(words) - 9) / 18, 1.0)
+        impact = min(sum(term in lowered for term in impact_terms), 3) / 3
+        punctuation = 0.25 if "?" in sentence else 0.15 if "!" in sentence else 0.0
+        numeric = 0.15 if re.search(r"\d", sentence) else 0.0
+        position = max(0.0, 0.18 - index * 0.04)
+        return length_quality * 0.42 + impact * 0.35 + punctuation + numeric + position
+
+    strongest = max(enumerate(sentences[:8]), key=strength)[1]
+    return normalize_title(strongest)
+
+
+def normalize_title(value: str) -> str:
+    title = normalize_text(value).strip(" \t\r\n\"'“”‘’#-–—")
+    title = re.sub(r"^(?:então|daí|mas|e|so|then|but|and)\s+", "", title,
+                   count=1, flags=re.IGNORECASE)
+    words = title.split()
+    if len(words) > 14:
+        title = " ".join(words[:14]).rstrip(".,;:!?") + "…"
+    if len(title) > 160:
+        title = title[:159].rstrip(" .,;:!?") + "…"
+    if not title:
+        return "Momento em destaque"
+    return title[0].upper() + title[1:]
 
 
 def semantic_score(text: str) -> tuple[float, str]:

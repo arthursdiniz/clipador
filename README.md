@@ -6,7 +6,7 @@ Sistema inteligente para transformar vídeos longos em clipes curtos coerentes, 
 
 **Fases 1 a 9 concluídas:** fundação, ingestão segura, pipeline assíncrono confiável, transcrição local, inteligência de seleção, renderização, smart reframing, hardening/observabilidade e interface web operacional.
 
-O endpoint YouTube valida e normaliza a URL, registra o job de forma idempotente e executa `yt-dlp` fora da thread HTTP. Após transcrever e selecionar trechos, o worker renderiza H.264/AAC em 9:16, 16:9 e/ou 1:1, gera SRT/VTT/ASS, aplica burn-in opcional e extrai thumbnail representativa. Em mudanças de proporção, OpenCV detecta rostos/pessoas e movimento; o FFmpeg aplica uma trajetória de crop interpolada e suavizada. Cada formato falha isoladamente e o backend conclui o job com sucesso parcial quando existe pelo menos um clipe válido.
+O endpoint YouTube valida e normaliza a URL, registra o job de forma idempotente e executa `yt-dlp` fora da thread HTTP. Após transcrever e selecionar trechos, o worker cria para cada corte um título curto e fiel à transcrição, renderiza H.264/AAC em 9:16, 16:9 e/ou 1:1, gera SRT/VTT/ASS, aplica burn-in opcional e extrai thumbnail representativa. O título aparece na interface e dá nome ao MP4 baixado. Em mudanças de proporção, OpenCV detecta rostos/pessoas e movimento; o FFmpeg aplica uma trajetória de crop interpolada e suavizada. Cada formato falha isoladamente e o backend conclui o job com sucesso parcial quando existe pelo menos um clipe válido.
 
 ## Arquitetura
 

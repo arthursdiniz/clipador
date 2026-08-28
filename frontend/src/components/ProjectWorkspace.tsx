@@ -91,7 +91,7 @@ export function ProjectWorkspace(props: Props) {
               {clip.renderError ? <AlertTriangle size={29} /> : <span className="play-button"><Play size={20} fill="currentColor" /></span>}
               <small>{formatDuration(clip.durationSeconds)}</small>
             </button>
-            <div className="clip-meta"><div><strong>Clipe {index + 1}</strong><span><Square size={12} /> {formatLabel(clip.format)}</span></div><button className="icon-button light" onClick={() => props.onDownload(clip)} disabled={!!clip.renderError} aria-label="Baixar clipe"><Download size={17} /></button></div>
+            <div className="clip-meta"><div><strong>{clip.title || `Clipe ${index + 1}`}</strong><span><Square size={12} /> {formatLabel(clip.format)}</span></div><button className="icon-button light" onClick={() => props.onDownload(clip)} disabled={!!clip.renderError} aria-label={`Baixar ${clip.title || `clipe ${index + 1}`}`}><Download size={17} /></button></div>
             {clip.subtitlePath && <span className="subtitle-ready"><Captions size={13} /> Legenda incorporada</span>}
             {clip.renderError && <p className="clip-error">{clip.renderError}</p>}
           </article>)}

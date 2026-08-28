@@ -164,7 +164,7 @@
 .clip-visual > small { grid-column:2; padding:3px 5px; color:#eaf1ed; background:rgba(0,0,0,.38); border-radius:4px; font-size:9px; }
 .clip-meta { padding:11px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .clip-meta strong,.clip-meta span { display:block; }
-.clip-meta strong { color:#30443b; font-size:11px; }
+.clip-meta strong { max-width:145px; min-height:28px; overflow:hidden; color:#30443b; font-size:11px; line-height:1.25; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
 .clip-meta span { margin-top:3px; display:flex; align-items:center; gap:4px; color:#87938d; font-size:9px; }
 .subtitle-ready { padding:0 11px 11px; display:flex; align-items:center; gap:5px; color:#537565; font-size:9px; }
 .clip-error { padding:0 11px 11px; margin:0; color:#9d4a41; font-size:9px; }

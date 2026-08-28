@@ -35,4 +35,16 @@ describe('API client', () => {
     expect(options?.body).toContain('youtube.com')
     expect(options?.body).toContain('"clipQuantityMode":"EXTENDED"')
   })
+
+  it('returns the engaging filename supplied by the backend when downloading', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['video']), {
+      status: 200,
+      headers: { 'Content-Disposition': 'attachment; filename="o-segredo-do-resultado.mp4"' },
+    }))
+
+    const asset = await api.downloadClip(credentials, 'clip-id')
+
+    expect(asset.filename).toBe('o-segredo-do-resultado.mp4')
+    expect(asset.blob).toBeInstanceOf(Blob)
+  })
 })

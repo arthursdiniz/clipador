@@ -57,6 +57,9 @@ public class ClipCandidate extends BaseEntity {
     @Column(length = 500)
     private String hook;
 
+    @Column(nullable = false, length = 160)
+    private String title;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 40)
     private ClipCategory category;
@@ -73,7 +76,7 @@ public class ClipCandidate extends BaseEntity {
                           BigDecimal semanticScore, BigDecimal audioScore, BigDecimal visualScore,
                           BigDecimal narrativeScore, BigDecimal hookScore, BigDecimal contextPenalty,
                           BigDecimal finalScore, String reason, String hook, ClipCategory category,
-                          String sourceText) {
+                          String sourceText, String title) {
         this.job = Objects.requireNonNull(job, "job is required");
         this.analysisKey = requireText(analysisKey, "analysisKey", 64);
         this.startTime = timestamp(startTime, "startTime", true);
@@ -88,6 +91,7 @@ public class ClipCandidate extends BaseEntity {
         this.finalScore = score(finalScore, "finalScore");
         this.reason = requireText(reason, "reason", 1000);
         this.hook = hook == null || hook.isBlank() ? null : requireText(hook, "hook", 500);
+        this.title = requireText(title, "title", 160);
         this.category = Objects.requireNonNull(category, "category is required");
         this.sourceText = requireText(sourceText, "sourceText", 50_000);
     }
@@ -98,10 +102,10 @@ public class ClipCandidate extends BaseEntity {
                                          BigDecimal visualScore, BigDecimal narrativeScore,
                                          BigDecimal hookScore, BigDecimal contextPenalty,
                                          BigDecimal finalScore, String reason, String hook,
-                                         ClipCategory category, String sourceText) {
+                                         ClipCategory category, String sourceText, String title) {
         return new ClipCandidate(job, analysisKey, startTime, endTime, semanticScore, audioScore,
                 visualScore, narrativeScore, hookScore, contextPenalty, finalScore,
-                reason, hook, category, sourceText);
+                reason, hook, category, sourceText, title);
     }
 
     public void select() { selected = true; }
@@ -140,6 +144,7 @@ public class ClipCandidate extends BaseEntity {
     public BigDecimal getFinalScore() { return finalScore; }
     public String getReason() { return reason; }
     public String getHook() { return hook; }
+    public String getTitle() { return title; }
     public ClipCategory getCategory() { return category; }
     public boolean isSelected() { return selected; }
     public String getSourceText() { return sourceText; }
